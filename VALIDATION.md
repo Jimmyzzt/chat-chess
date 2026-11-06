@@ -2,12 +2,9 @@
 
 日期：2026-11-06（Asia/Shanghai）。环境：Windows、Node.js 24.19.0、Wrangler 4.158.0。
 
-- 
-pm test`：25/25 通过；全部 API 调用使用模拟响应，不需要真实 Key。新增 DeepSeek JSON 请求、完整映射、空白/截断/格式错误、HTTP 错误、单 POST 无自动重试、字号换行与恶意 ZIP 输入检查。
-- 
-pm run deploy:check`：初始 assets-only 配置通过；GitHub Pages workflow 只上传 `public/`，不安装运行时依赖。
-- 
-pm run capacity`：12 个文件，共 60,596 bytes；最大文件 15,212 bytes。首次页面加载 HTML、CSS、5 个 JS、favicon，共 8 个静态资源；图标 ZIP 从用户文件本地读取，不新增 HTTP 请求。
+- `npm test`：25/25 通过；全部 API 调用使用模拟响应，不需要真实 Key。新增 DeepSeek JSON 请求、完整映射、空白/截断/格式错误、HTTP 错误、单 POST 无自动重试、字号换行与恶意 ZIP 输入检查。
+- `npm run deploy:check`：初始 assets-only 配置通过；GitHub Pages workflow 只上传 `public/`，不安装运行时依赖。
+- `npm run capacity`：12 个文件，共 60,596 bytes；最大文件 15,212 bytes。首次页面加载 HTML、CSS、5 个 JS、favicon，共 8 个静态资源；图标 ZIP 从用户文件本地读取，不新增 HTTP 请求。
 - 本地 GET `/` 返回 200；未知 `/api/analyze` 返回 404；CSP、Referrer-Policy、X-Content-Type-Options、X-Frame-Options 等响应头生效。
 - 无认证 OPTIONS `https://api.openai.com/v1/decisions`：200，允许 POST/OPTIONS、authorization/content-type、origin `*`。没有测试真实账户权限、有效 Key 成功响应或实际计费。
 - 无认证 OPTIONS `https://api.deepseek.com/chat/completions`（Origin 为 Pages）：200，允许 POST、authorization/content-type，allow-origin 匹配。DeepSeek 有效 Key 成功响应与真实评价质量未验证。
@@ -25,8 +22,7 @@ GitHub 目标账号：Jimmyzzt。CLI 认证有效，token 没有返回套餐名�
 
 尚未验证：实际 Cloudflare 账号套餐与额度、生产压力/故障注入及真实模型评价质量。没有开通付费服务。Pages 托管故障/限流时，新访问可能失败；已加载页面可继续本地编辑和导出，备用为本地运行或 Cloudflare Static Assets。
 
-本次受限执行环境无法写 Wrangler 默认用户目录，因此启动和打包检查将 `WRANGLER_LOG_PATH`、本地 dev 的 `WRANGLER_REGISTRY_PATH` 重定向到项目 `.wrangler/`，没有修改系统配置或全局用户设置。普通用户终端可以直接运行 
-pm run dev`。
+本次受限执行环境无法写 Wrangler 默认用户目录，因此启动和打包检查将 `WRANGLER_LOG_PATH`、本地 dev 的 `WRANGLER_REGISTRY_PATH` 重定向到项目 `.wrangler/`，没有修改系统配置或全局用户设置。普通用户终端可以直接运行 `npm run dev`。
 
 本次小修：移除社区导入代码及两处提示，转发说明改为“本页面无任何转发服务。”；关闭按钮使用居中的 SVG 叉号。新增短气泡、左右侧及超长名字的完整显示回归测试，25 项测试通过。首次打开减为 7 个静态请求，仍为 0 Worker 调用。此前社区导入验收仅为历史记录，当前已移除。
 
