@@ -1,5 +1,7 @@
-import { RATINGS, MAX_MESSAGES, exampleMessages, validateMessages, parseConversation, analyzeMessages, clearAIResults, applyAnalysis, speakerOf, participants, assignSides } from './core.js';
+import { RATINGS, MAX_MESSAGES, exampleMessages, validateMessages, parseConversation, clearAIResults, applyAnalysis, speakerOf, participants, assignSides } from './core.js';
 import { FONT, badgeSVG, layoutMessages, renderSVG, exportPages } from './render.js';
+import { PROVIDERS, analyzeWithProvider } from './providers.js';
+import { loadCommunityPack, resetCommunityIcons } from './icons.js';
 const $ = id => document.getElementById(id);
 let messages = exampleMessages();
 let rightSpeaker = 'B';
@@ -11,8 +13,13 @@ const context = document.createElement('canvas').getContext('2d');
 context.font = `38px ${FONT}`;
 const measure = text => context.measureText(text).width;
 const status = (text, error = false) => { $('status').textContent = text; $('status').classList.toggle('error', error); };
-const sourceLabel = message => ({ example: '示例预设 · 来自参考梗图', manual: '手动标记 · 非 AI 评价', ai: `AI 评价 · 置信度 ${Math.round((message.confidence || 0) * 100)}%（不代表客观正确率）`, unrated: '尚未评价', refused: 'AI 未给出评价 · 可以手动标记' })[message.source];
-const currentLayout = () => layoutMessages(messages, measure, { showIds: $('show-ids').checked, showAvatars: $('show-avatars').checked });
+const sourceLabel = message => ({ example: '示例预设 · 来自参考梗图', manual: '手动标记 · 非 AI 评价', ai: `AI 评价 · ${PROVIDERS[message.provider]?.label || 'OpenAI'}${Number.isFinite(message.confidence) ? ` · 置信度 ${Math.round(message.confidence * 100)}%（不代表客观正确率）` : ' · JSON 分类'}`, unrated: '尚未评价', refused: 'AI 未给出评价 · 可以手动标记' })[message.source];
+const currentLayout = () => {
+  const fontSize = Number($('font-size').value);
+  context.font = `${fontSize}px ${FONT}`;
+  return layoutMessages(messages, measure, { showIds: $('show-ids').checked, showAvatars: $('show-avatars').checked, fontSize });
+};
+function renderLegend() { $('legend').innerHTML = Object.entries(RATINGS).map(([value, rating]) => `<span class="legend-item" title="${rating.zh}">${badgeSVG(value)}${rating.label}</span>`).join(''); }
 function updateRoles() {
   const people = participants(messages);
   $('right-role').replaceChildren(new Option('全部在左侧', ''), ...people.map(person => new Option(person, person)));
@@ -49,12 +56,25 @@ function editMessage(index, isNew = false) {
   $('edit-dialog').showModal();
 }
 $('rating').append(new Option('未标记', ''), ...Object.entries(RATINGS).map(([value, rating]) => new Option(`${rating.label} · ${rating.zh}`, value)));
-$('legend').innerHTML = Object.entries(RATINGS).map(([value, rating]) => `<span class="legend-item" title="${rating.zh}">${badgeSVG(value)}${rating.label}</span>`).join('');
+renderLegend();
 $('chat-preview').addEventListener('click', event => { const group = event.target.closest('[data-index]'); if (group) editMessage(Number(group.dataset.index)); });
 $('chat-preview').addEventListener('keydown', event => { if ((event.key === 'Enter' || event.key === ' ') && event.target.matches('[data-index]')) { event.preventDefault(); editMessage(Number(event.target.dataset.index)); } });
 $('add').addEventListener('click', () => editMessage(messages.length, true));
 $('right-role').addEventListener('change', () => { rightSpeaker = $('right-role').value; messages = assignSides(messages, rightSpeaker); render(); status('已调整右侧角色 · 发言者身份与已有评价保持不变'); });
 for (const id of ['show-ids', 'show-avatars']) $(id).addEventListener('change', () => { render(); status('显示设置已更新 · 导出图片使用相同设置'); });
+$('font-size').addEventListener('input', () => { $('font-size-value').value = $('font-size').value; render(); });
+$('import-icons').addEventListener('click', () => $('icon-file').click());
+$('icon-file').addEventListener('change', async () => {
+  const file = $('icon-file').files[0]; if (!file) return;
+  $('import-icons').disabled = true;
+  try {
+    await loadCommunityPack(file); renderLegend(); render(); $('reset-icons').hidden = false;
+    $('icon-status').textContent = '已导入社区图标 · 仅当前页面使用 · 权利归原权利人，不属于本项目 MIT';
+    status('社区图标已应用到预览和导出 · 未上传任何文件');
+  } catch (error) { status(`图标导入失败：${error.message}`, true); }
+  finally { $('import-icons').disabled = false; $('icon-file').value = ''; }
+});
+$('reset-icons').addEventListener('click', () => { resetCommunityIcons(); renderLegend(); render(); $('reset-icons').hidden = true; $('icon-status').textContent = '默认原创 SVG · 社区素材可本地导入，不上传、不随 MIT 授权'; status('已恢复原创 SVG 图标'); });
 $('rating').addEventListener('change', () => { $('manual-rating').checked = true; $('rating-source').textContent = '保存后将标为手动修改。'; });
 document.querySelectorAll('[data-close]').forEach(button => button.addEventListener('click', () => $(button.dataset.close).close()));
 $('edit-form').addEventListener('submit', event => {
@@ -68,7 +88,7 @@ $('edit-form').addEventListener('submit', event => {
   const changedConversation = text !== previous.text || speaker !== speakerOf(previous);
   const next = changedConversation ? clearAIResults(messages) : messages.map(message => ({ ...message }));
   const edited = { text, speaker, side, ...(previous.timestamp ? { timestamp: previous.timestamp } : {}), rating: manuallyRated ? rating : (changedConversation ? null : rating), source: manuallyRated ? (rating ? 'manual' : 'unrated') : (changedConversation ? 'unrated' : previous.source) };
-  if (!changedConversation && !manuallyRated && previous.source === 'ai') edited.confidence = previous.confidence;
+  if (!changedConversation && !manuallyRated && previous.source === 'ai') { edited.provider = previous.provider; if (Number.isFinite(previous.confidence)) edited.confidence = previous.confidence; }
   if (adding) next.push(edited); else next[editing] = edited;
   try { validateMessages(next); } catch (error) { $('edit-error').textContent = error.message; return; }
   if (side === 'right') rightSpeaker = speaker;
@@ -106,7 +126,13 @@ $('paste-form').addEventListener('submit', event => {
   }
   catch (error) { $('paste-error').textContent = error.message; }
 });
-$('reset').addEventListener('click', () => { messages = exampleMessages(); rightSpeaker = 'B'; $('show-ids').checked = false; $('show-avatars').checked = false; render(); status('已还原原图示例 · 这些标记是示例预设'); });
+$('reset').addEventListener('click', () => { messages = exampleMessages(); rightSpeaker = 'B'; $('show-ids').checked = false; $('show-avatars').checked = false; $('font-size').value = '38'; $('font-size-value').value = '38'; render(); status('已还原原图示例 · 这些标记是示例预设'); });
+$('provider').addEventListener('change', () => {
+  $('clear-key').click(); const provider = PROVIDERS[$('provider').value];
+  $('key-label').textContent = `${provider.label} API Key`;
+  $('consent-text').textContent = `我了解浏览器使用 Key 的风险，同意将聊天发送给 ${provider.label}。`;
+  status(`已切换至 ${provider.label} · Key 和发送确认已清空`);
+});
 $('toggle-key').addEventListener('click', () => { const showing = $('api-key').type === 'password'; $('api-key').type = showing ? 'text' : 'password'; $('toggle-key').textContent = showing ? '隐藏' : '显示'; $('toggle-key').setAttribute('aria-pressed', String(showing)); });
 $('clear-key').addEventListener('click', () => { $('api-key').value = ''; $('api-key').type = 'password'; $('toggle-key').textContent = '显示'; $('toggle-key').setAttribute('aria-pressed', 'false'); $('consent').checked = false; status('已清除页面中的 API Key'); });
 $('cancel-analysis').addEventListener('click', () => activeController?.abort());
@@ -114,12 +140,13 @@ $('analyze').addEventListener('click', async () => {
   if (activeController) return;
   if (!$('api-key').value.trim() || !$('consent').checked) { $('ai-settings').open = true; $('api-key').focus(); status('填写你自己的 Key 并确认发送后，再点击 AI 复盘。'); return; }
   const controller = new AbortController(); activeController = controller;
-  const locked = ['add', 'paste-open', 'reset', 'analyze', 'right-role'];
+  const provider = $('provider').value;
+  const locked = ['add', 'paste-open', 'reset', 'analyze', 'right-role', 'provider'];
   locked.forEach(id => { $(id).disabled = true; });
   $('cancel-analysis').hidden = false; $('ai-settings').open = true;
-  $('analyze').textContent = '复盘中…'; status(`正在一次性复盘 ${messages.length} 条消息 · 等待 OpenAI 返回（最多 45 秒）`);
+  $('analyze').textContent = '复盘中…'; status(`正在一次性复盘 ${messages.length} 条消息 · 等待 ${PROVIDERS[provider].label} 返回（最多 45 秒）`);
   try {
-    const results = await analyzeMessages(messages, $('api-key').value.trim(), { signal: controller.signal });
+    const results = await analyzeWithProvider(messages, $('api-key').value.trim(), provider, { signal: controller.signal });
     const preserved = messages.filter(message => message.source === 'manual').length;
     messages = applyAnalysis(messages, results);
     render();

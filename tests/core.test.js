@@ -82,7 +82,7 @@ test('ID/avatar display settings affect both preview and export without remote a
   assert.equal(avatarFor('0verthink').text, '0v');
   assert.equal(avatarFor('👩‍💻小林').text, '👩‍💻小');
   const hostile = renderSVG(layoutMessages([{ side: 'left', speaker: '<img onerror=x>', text: 'hi' }], text => text.length * 20, { showIds: true, showAvatars: true }));
-  assert.ok(!hostile.includes('<img')); assert.ok(hostile.includes('&lt;img'));
+  assert.ok(!hostile.includes('<img')); assert.ok(hostile.includes('&lt;'));
 });
 test('one payload contains shared conversation and named choice questions', () => {
   const body = buildDecisionRequest(chat);

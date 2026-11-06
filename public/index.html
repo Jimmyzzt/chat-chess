@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' blob: data:; connect-src https://api.openai.com; font-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' blob: data:; connect-src https://api.openai.com https://api.deepseek.com; font-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
   <meta name="description" content="像复盘棋局一样复盘聊天。手动标记、AI 评价，一键做成聊天梗图。">
   <title>Chat Chess · 这句，妙啊。</title>
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
@@ -33,6 +33,11 @@
         <label class="role-picker" for="right-role">右侧角色 <select id="right-role" aria-label="右侧角色"></select></label>
         <div class="display-toggles"><label><input id="show-ids" type="checkbox">显示 ID</label><label><input id="show-avatars" type="checkbox">显示头像</label></div>
       </div>
+      <div class="appearance-options">
+        <label class="font-control" for="font-size">聊天字号 <input id="font-size" type="range" min="24" max="48" value="38"><output id="font-size-value" for="font-size">38</output></label>
+        <div class="icon-controls"><button id="import-icons" class="text-button">导入社区图标 ZIP</button><button id="reset-icons" class="text-button" hidden>恢复原创</button><input id="icon-file" type="file" accept=".zip,application/zip" hidden></div>
+      </div>
+      <p id="icon-status" class="icon-status">默认原创 SVG · 社区素材可本地导入，不上传、不随 MIT 授权</p>
       <div class="paper"><div id="chat-preview" aria-label="点击消息编辑文字与棋步评价"></div></div>
       <div class="under-preview"><span>点击气泡或标记，即可编辑</span><button id="add" class="text-button">＋ 添加消息</button></div>
       <div class="action-bar">
@@ -42,12 +47,13 @@
       <p id="status" class="status" role="status" aria-live="polite">已载入原图示例 · 无需 API Key，自由编辑与导出</p>
       <div id="download-results" class="downloads" hidden></div>
       <details id="ai-settings" class="ai-settings">
-        <summary>AI 设置 <span>自带 OpenAI Key · 可选</span></summary>
+        <summary>AI 设置 <span>自带 API Key · 可选</span></summary>
         <div class="settings-content">
-          <label for="api-key">OpenAI API Key</label>
+          <label for="provider">AI 服务</label><select id="provider"><option value="deepseek">DeepSeek · deepseek-flash · JSON 输出</option><option value="openai">OpenAI · gpt-6-luna · Decisions</option></select>
+          <label id="key-label" for="api-key">DeepSeek API Key</label>
           <div class="key-field"><input id="api-key" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="sk-…"><button id="toggle-key" class="text-button" aria-pressed="false">显示</button><button id="clear-key" class="text-button">清除</button></div>
-          <p class="help">Key 只留在当前页面内存中，刷新后清空。复盘时，浏览器将 Key 和整段聊天直接发送至 OpenAI，本站无转发服务。浏览器扩展、被篡改的页面仍可能读取 Key；请只在可信页面使用专用 Key，并在 OpenAI 账户配置权限和预算提醒。</p>
-          <label class="consent"><input id="consent" type="checkbox">我了解浏览器使用 Key 的风险，同意将聊天发送给 OpenAI。</label>
+          <p class="help">Key 只留在当前页面内存中，刷新后清空。复盘时，浏览器将 Key 和整段聊天直接发送至所选 AI 服务，本站无转发服务。切换服务会清除 Key 和发送确认。浏览器扩展、被篡改的页面仍可能读取 Key；请只在可信页面使用专用 Key，并配置账户权限与消费提醒。</p>
+          <label class="consent"><input id="consent" type="checkbox"><span id="consent-text">我了解浏览器使用 Key 的风险，同意将聊天发送给 DeepSeek。</span></label>
           <p class="help">一次点击 = 一次完整对话请求，不自动重试。AI 评价仅供玩梗，可能误解语境；可随时手动修改。</p>
           <button id="cancel-analysis" class="text-button" hidden>取消复盘</button>
         </div>
@@ -55,7 +61,7 @@
     </section>
     <section class="legend-section" aria-label="棋步标记说明"><p class="legend-title">从平平无奇，到一招绝杀</p><div id="legend" class="legend"></div></section>
     <footer>没有账号，没有云端聊天记录。<span>只有你，和你的神回复。</span></footer>
-    <p class="project-note">独立开源梗图工具，与 Chess.com、微信及 OpenAI 无隶属关系。</p>
+    <p class="project-note">独立开源梗图工具，与 Chess.com、微信、OpenAI 及 DeepSeek 无隶属关系。<a href="./third-party.html">图标与第三方素材说明</a></p>
   </main>
   <dialog id="edit-dialog" aria-labelledby="edit-title">
     <form id="edit-form">

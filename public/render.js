@@ -1,4 +1,5 @@
 import { RATINGS, speakerOf } from './core.js';
+import { communityIcon } from './icons.js';
 export const WIDTH = 720;
 export const FONT = 'Arial, "Microsoft YaHei", sans-serif';
 export const escapeXML = value => String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' })[char]);
@@ -12,6 +13,7 @@ export function iconMarkup(rating) {
   return `<text y="17" text-anchor="middle" fill="${white}" font-family="Arial,sans-serif" font-weight="800" font-size="${symbol.length === 2 ? 46 : 48}" letter-spacing="-3">${symbol}</text>`;
 }
 export function badgeSVG(rating) {
+  if (communityIcon(rating)) return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-32 -32 64 66" aria-hidden="true">${communityIcon(rating)}</svg>`;
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-32 -32 64 64" aria-hidden="true"><circle r="31" fill="${RATINGS[rating].color}"/>${iconMarkup(rating)}</svg>`;
 }
 export function wrapText(text, measure, maxWidth = 616) {
@@ -39,21 +41,27 @@ export function avatarFor(speaker) {
   const characters = typeof Intl.Segmenter === 'function' ? [...new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(speaker)].map(part => part.segment) : Array.from(speaker);
   return { text: characters.slice(0, 2).join(''), color: AVATAR_COLORS[hash % AVATAR_COLORS.length] };
 }
-export function layoutMessages(messages, measure, { showIds = false, showAvatars = false } = {}) {
+export function layoutMessages(messages, measure, { showIds = false, showAvatars = false, fontSize = 38 } = {}) {
+  fontSize = Number.isFinite(Number(fontSize)) ? Math.min(48, Math.max(24, Number(fontSize))) : 38;
+  const lineHeight = Math.round(fontSize * 1.26);
   let y = 48;
   const inset = showAvatars ? 96 : 20;
   const maxBubbleWidth = WIDTH - inset - 20;
   const items = messages.map((message, index) => {
     const lines = wrapText(message.text, measure, maxBubbleWidth - 48);
     const width = Math.min(maxBubbleWidth, Math.max(72, ...lines.map(measure)) + 48);
-    const height = Math.max(84, lines.length * 48 + 36);
+    const height = Math.max(showAvatars ? 80 : 60, lines.length * lineHeight + 36);
     const x = message.side === 'right' ? WIDTH - inset - width : inset;
-    if (showIds) y += 54;
-    const item = { ...message, speaker: speakerOf(message), index, x, y, top: y - (showIds ? 66 : 32), width, height, lines };
+    if (showIds) y += 30;
+    const speaker = speakerOf(message);
+    const characters = Array.from(speaker);
+    let displayName = speaker;
+    while (characters.length > 1 && measure(displayName) * 20 / fontSize > Math.max(40, width - 72)) { characters.pop(); displayName = characters.join('') + '…'; }
+    const item = { ...message, speaker, displayName, index, x, y, top: y - 34, width, height, lines };
     y += height + (messages[index + 1] && speakerOf(messages[index + 1]) === speakerOf(message) ? 12 : 32);
     return item;
   });
-  return { items, width: WIDTH, height: Math.max(180, y - 12), showIds, showAvatars };
+  return { items, width: WIDTH, height: Math.max(180, y - 12), showIds, showAvatars, fontSize, lineHeight };
 }
 export function renderSVG(layout, { interactive = false, top = 0, height = layout.height } = {}) {
   const groups = layout.items.filter(item => item.y + item.height >= top && item.top <= top + height).map(item => {
@@ -61,16 +69,13 @@ export function renderSVG(layout, { interactive = false, top = 0, height = layou
     const fill = side === 'left' ? '#efefef' : 'url(#chat-gradient)';
     const textColor = side === 'left' ? '#171717' : '#fff';
     const badgeX = side === 'left' ? x + width - 5 : x + 2;
-    const badge = rating && Object.hasOwn(RATINGS, rating) ? `<g transform="translate(${badgeX} ${y + 1})"><circle r="30" fill="${RATINGS[rating].color}"/>${iconMarkup(rating)}</g>` : '';
+    const badge = rating && Object.hasOwn(RATINGS, rating) ? `<g transform="translate(${badgeX} ${y + 1})">${communityIcon(rating) || `<circle r="30" fill="${RATINGS[rating].color}"/>${iconMarkup(rating)}`}</g>` : '';
     const avatar = avatarFor(item.speaker);
     const avatarX = side === 'left' ? 20 : WIDTH - 80;
     const avatarMarkup = layout.showAvatars ? `<g transform="translate(${avatarX} ${y + 10})"><rect width="60" height="60" rx="18" fill="${avatar.color}"/><text x="30" y="31" dominant-baseline="central" text-anchor="middle" font-family='${FONT}' font-weight="600" font-size="${[...avatar.text].length === 1 ? 35 : 27}" fill="#55515b">${escapeXML(avatar.text)}</text></g>` : '';
-    const maxNameCharacters = 25;
-    const nameCharacters = Array.from(item.speaker);
-    const name = nameCharacters.length > maxNameCharacters ? nameCharacters.slice(0, maxNameCharacters - 1).join('') + '…' : item.speaker;
-    const nameMarkup = layout.showIds ? `<text x="${side === 'left' ? x + 12 : x + width - 12}" y="${y - 42}" text-anchor="${side === 'left' ? 'start' : 'end'}" font-family='${FONT}' font-size="22" fill="#8b8592">${escapeXML(name)}</text>` : '';
+    const nameMarkup = layout.showIds ? `<text x="${side === 'left' ? x + 12 : x + width - 12}" y="${y - 8}" text-anchor="${side === 'left' ? 'start' : 'end'}" font-family='${FONT}' font-size="20" fill="#8b8592">${escapeXML(item.displayName)}</text>` : '';
     const attributes = interactive ? `data-index="${index}" role="button" tabindex="0" aria-label="${escapeXML(`编辑第 ${index + 1} 条消息，${item.speaker}：${item.text}；${rating ? RATINGS[rating].label : '未标记'}`)}"` : '';
-    return `<g ${attributes}>${nameMarkup}${avatarMarkup}<rect x="${x}" y="${y}" width="${width}" height="${bubbleHeight}" rx="42" fill="${fill}"/><text fill="${textColor}" font-family='${FONT}' font-size="38">${lines.map((line, i) => `<tspan x="${x + 24}" y="${y + 55 + i * 48}">${escapeXML(line)}</tspan>`).join('')}</text>${badge}</g>`;
+    return `<g ${attributes}>${nameMarkup}${avatarMarkup}<rect x="${x}" y="${y}" width="${width}" height="${bubbleHeight}" rx="${Math.min(42, bubbleHeight / 2)}" fill="${fill}"/><text fill="${textColor}" font-family='${FONT}' font-size="${layout.fontSize}">${lines.map((line, i) => `<tspan x="${x + 24}" y="${y + 18 + layout.fontSize * .98 + i * layout.lineHeight}">${escapeXML(line)}</tspan>`).join('')}</text>${badge}</g>`;
   }).join('');
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 ${top} ${WIDTH} ${height}" width="${WIDTH}" height="${height}" ${interactive ? 'role="group" aria-label="聊天梗图，可点击各条消息编辑"' : ''}><defs><linearGradient id="chat-gradient" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="${layout.height}"><stop stop-color="#6442cf"/><stop offset="1" stop-color="#2f8de5"/></linearGradient></defs><rect y="${top}" width="720" height="${height}" fill="white"/>${groups}</svg>`;
 }

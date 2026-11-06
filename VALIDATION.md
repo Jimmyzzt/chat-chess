@@ -2,19 +2,23 @@
 
 日期：2026-11-06（Asia/Shanghai）。环境：Windows、Node.js 24.19.0、Wrangler 4.158.0。
 
-- `npm test`：19/19 通过；全部 API 调用使用模拟响应，不需要真实 Key。新增微信昵称/时间/多行解析、群聊身份、角色切换、头像生成、ID/头像开关及 AI 结果身份保留测试。
+- `npm test`：25/25 通过；全部 API 调用使用模拟响应，不需要真实 Key。新增 DeepSeek JSON 请求、完整映射、空白/截断/格式错误、HTTP 错误、单 POST 无自动重试、字号换行与恶意 ZIP 输入检查。
 - `npm run deploy:check`：初始 assets-only 配置通过；GitHub Pages workflow 只上传 `public/`，不安装运行时依赖。
-- `npm run capacity`：9 个文件，共 46,406 bytes；最大文件 13,100 bytes。`_headers` 和 `.nojekyll` 是部署配置，首次页面加载只请求 HTML、CSS、3 个 JS、favicon，共 6 个静态资源。
+- `npm run capacity`：12 个文件，共 60,596 bytes；最大文件 15,212 bytes。首次页面加载 HTML、CSS、5 个 JS、favicon，共 8 个静态资源；图标 ZIP 从用户文件本地读取，不新增 HTTP 请求。
 - 本地 GET `/` 返回 200；未知 `/api/analyze` 返回 404；CSP、Referrer-Policy、X-Content-Type-Options、X-Frame-Options 等响应头生效。
 - 无认证 OPTIONS `https://api.openai.com/v1/decisions`：200，允许 POST/OPTIONS、authorization/content-type、origin `*`。没有测试真实账户权限、有效 Key 成功响应或实际计费。
+- 无认证 OPTIONS `https://api.deepseek.com/chat/completions`（Origin 为 Pages）：200，允许 POST、authorization/content-type，allow-origin 匹配。DeepSeek 有效 Key 成功响应与真实评价质量未验证。
 - 浏览器实测六条示例、手动改评价及来源显示、中文冒号和续行粘贴、新增/删除、还原示例、无 Key 时展开设置。
 - 原图示例 PNG 实际下载成功，1440 × 1424，只有气泡和标记；微信群聊含 ID/头像的 PNG 也在浏览器实际生成成功，提供下载链接。预览/导出共用 SVG 布局。验收产物在本地 `artifacts/`，不提交公开仓库。
 - 手机和桌面布局检查完成，无横向溢出。截图见 `artifacts/mobile-preview.jpg` 和 `artifacts/desktop-preview.jpg`。
 - 浏览器日志未发现 error/warn。实测微信导入识别 4 条消息、3 位角色，选择右侧角色、独立隐藏 ID/头像、群聊 PNG 导出成功。长图分页、拒绝评价、超时/取消、错误响应及手动结果保留通过定向自动测试。
+- 本次在浏览器中用用户的 `brilliance_v2.zip` 成功导入八个 SVG；预览和图例同步替换，24 字号含社区图标的 PNG 实际生成成功。素材与压缩包未提交公开仓库。社区整理包没有再分发许可，边界见 THIRD_PARTY_NOTICES.md。
+- 字号 24 和 48 两端已实测；ID 基线为气泡上方 8 个排版像素（原先 42），不再留大块空白。手机无横向溢出。截图 `artifacts/icons-font-preview.jpg` 为本地验收产物，不公开分发。
+- 实测切换 AI 服务会清空 Key 和发送确认；DeepSeek JSON 结果不展示虚构置信度。未使用真实 Key 发出计费请求。
 
-当前计算扇出：访问/编辑/导出为本站 0 次 Worker 计算调用；一次 AI 复盘为本站 0 次 Worker 计算调用、0 次 Worker 子请求，客户端 1 次 OpenAI POST，加至多 1 次预检。不自动重试。
+当前计算扇出：访问/编辑/导出/本地导入为本站 0 次 Worker 计算调用；一次 AI 复盘为本站 0 次 Worker 计算调用、0 次 Worker 子请求，客户端 1 次所选 AI 服务的 POST，加至多 1 次预检。不自动重试或切换服务。
 
-GitHub 目标账号：Jimmyzzt。CLI 认证有效，token 没有返回套餐名称；公开仓库 Pages 在 Free 及以上套餐支持，无需升级。发布前按官方 Pages 1GB 站点 / 100GB 月软带宽 / 10 分钟部署限制做预算；资源不足 50KB，1,000,000 次冷访问上界约 50GB，保留至少一半带宽余量。仓库启用 Pages 后由 `.github/workflows/pages.yml` 发布，最终状态以 GitHub Actions 和线上 URL 为准。
+GitHub 目标账号：Jimmyzzt。CLI 认证有效，token 没有返回套餐名称；公开仓库 Pages 在 Free 及以上套餐支持，无需升级，前次实际部署成功已验证可用性。发布前重新核对官方 Pages 1GB 站点 / 100GB 月软带宽 / 10 分钟部署限制；资源约 61KB，按 70KB 冷访问上界估算，500,000 次约 35GB，保留约 65% 带宽余量。由 `.github/workflows/pages.yml` 发布，最终状态以 GitHub Actions 和线上 URL 为准。
 
 尚未验证：实际 Cloudflare 账号套餐与额度、生产压力/故障注入及真实模型评价质量。没有开通付费服务。Pages 托管故障/限流时，新访问可能失败；已加载页面可继续本地编辑和导出，备用为本地运行或 Cloudflare Static Assets。
 

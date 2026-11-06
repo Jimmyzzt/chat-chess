@@ -7,5 +7,5 @@ async function walk(path) {
 const files = await walk('public');
 const total = files.reduce((sum, file) => sum + file.bytes, 0);
 console.table(files);
-console.log(JSON.stringify({ files: files.length, totalBytes: total, largestFileBytes: Math.max(...files.map(file => file.bytes)), workerRequestsPerVisit: 0, workerSubrequestsPerAnalysis: 0, openaiPostsPerAnalysis: 1, maxOpenaiPreflightsPerAnalysis: 1, databaseBytes: 0 }, null, 2));
+console.log(JSON.stringify({ files: files.length, totalBytes: total, largestFileBytes: Math.max(...files.map(file => file.bytes)), staticRequestsPerColdVisit: 8, workerRequestsPerVisit: 0, workerSubrequestsPerAnalysis: 0, providerPostsPerAnalysis: 1, maxProviderPreflightsPerAnalysis: 1, databaseBytes: 0 }, null, 2));
 if (files.length > 2000 || files.some(file => file.bytes > 2.5 * 1024 * 1024)) throw new Error('Static asset budget exceeded (10% of Free tier file/size limits).');
