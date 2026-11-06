@@ -39,7 +39,7 @@ export function avatarFor(speaker) {
   const characters = typeof Intl.Segmenter === 'function' ? [...new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(speaker)].map(part => part.segment) : Array.from(speaker);
   return { text: characters.slice(0, 2).join(''), color: AVATAR_COLORS[hash % AVATAR_COLORS.length] };
 }
-export function layoutMessages(messages, measure, { showIds = false, showAvatars = false, fontSize = 38 } = {}) {
+export function layoutMessages(messages, measure, { showIds = false, showAvatars = false, fontSize = 38, dark = false } = {}) {
   fontSize = Number.isFinite(Number(fontSize)) ? Math.min(48, Math.max(24, Number(fontSize))) : 38;
   const lineHeight = Math.round(fontSize * 1.26);
   let y = 48;
@@ -58,23 +58,23 @@ export function layoutMessages(messages, measure, { showIds = false, showAvatars
     y += height + (messages[index + 1] && speakerOf(messages[index + 1]) === speakerOf(message) ? 12 : 32);
     return item;
   });
-  return { items, width: WIDTH, height: Math.max(180, y - 12), showIds, showAvatars, fontSize, lineHeight };
+  return { items, width: WIDTH, height: Math.max(180, y - 12), showIds, showAvatars, fontSize, lineHeight, dark };
 }
 export function renderSVG(layout, { interactive = false, top = 0, height = layout.height } = {}) {
   const groups = layout.items.filter(item => item.y + item.height >= top && item.top <= top + height).map(item => {
     const { x, y, width, height: bubbleHeight, lines, side, rating, index } = item;
-    const fill = side === 'left' ? '#efefef' : 'url(#chat-gradient)';
-    const textColor = side === 'left' ? '#171717' : '#fff';
+    const fill = side === 'left' ? (layout.dark ? '#34313f' : '#efefef') : 'url(#chat-gradient)';
+    const textColor = side === 'left' ? (layout.dark ? '#f3f0f8' : '#171717') : '#fff';
     const badgeX = side === 'left' ? x + width - 5 : x + 2;
     const badge = rating && Object.hasOwn(RATINGS, rating) ? `<g transform="translate(${badgeX} ${y + 1})"><circle r="30" fill="${RATINGS[rating].color}"/>${iconMarkup(rating)}</g>` : '';
     const avatar = avatarFor(item.speaker);
     const avatarX = side === 'left' ? 20 : WIDTH - 80;
     const avatarMarkup = layout.showAvatars ? `<g transform="translate(${avatarX} ${y + 10})"><rect width="60" height="60" rx="18" fill="${avatar.color}"/><text x="30" y="31" dominant-baseline="central" text-anchor="middle" font-family='${FONT}' font-weight="600" font-size="${[...avatar.text].length === 1 ? 35 : 27}" fill="#55515b">${escapeXML(avatar.text)}</text></g>` : '';
-    const nameMarkup = layout.showIds ? `<text x="${side === 'left' ? x + 12 : x + width - 12}" y="${y - 8}" text-anchor="${side === 'left' ? 'start' : 'end'}" font-family='${FONT}' font-size="20" fill="#8b8592">${item.nameLines.map((line, i) => `<tspan x="${side === 'left' ? x + 12 : x + width - 12}" y="${y - 8 - (item.nameLines.length - 1 - i) * 24}">${escapeXML(line)}</tspan>`).join('')}</text>` : '';
+    const nameMarkup = layout.showIds ? `<text x="${side === 'left' ? x + 12 : x + width - 12}" y="${y - 8}" text-anchor="${side === 'left' ? 'start' : 'end'}" font-family='${FONT}' font-size="20" fill="${layout.dark ? '#b9b2c8' : '#8b8592'}">${item.nameLines.map((line, i) => `<tspan x="${side === 'left' ? x + 12 : x + width - 12}" y="${y - 8 - (item.nameLines.length - 1 - i) * 24}">${escapeXML(line)}</tspan>`).join('')}</text>` : '';
     const attributes = interactive ? `data-index="${index}" role="button" tabindex="0" aria-label="${escapeXML(`编辑第 ${index + 1} 条消息，${item.speaker}：${item.text}；${rating ? RATINGS[rating].label : '未标记'}`)}"` : '';
     return `<g ${attributes}>${nameMarkup}${avatarMarkup}<rect x="${x}" y="${y}" width="${width}" height="${bubbleHeight}" rx="${Math.min(42, bubbleHeight / 2)}" fill="${fill}"/><text fill="${textColor}" font-family='${FONT}' font-size="${layout.fontSize}">${lines.map((line, i) => `<tspan x="${x + 24}" y="${y + 18 + layout.fontSize * .98 + i * layout.lineHeight}">${escapeXML(line)}</tspan>`).join('')}</text>${badge}</g>`;
   }).join('');
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 ${top} ${WIDTH} ${height}" width="${WIDTH}" height="${height}" ${interactive ? 'role="group" aria-label="聊天梗图，可点击各条消息编辑"' : ''}><defs><linearGradient id="chat-gradient" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="${layout.height}"><stop stop-color="#6442cf"/><stop offset="1" stop-color="#2f8de5"/></linearGradient></defs><rect y="${top}" width="720" height="${height}" fill="white"/>${groups}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 ${top} ${WIDTH} ${height}" width="${WIDTH}" height="${height}" ${interactive ? 'role="group" aria-label="聊天梗图，可点击各条消息编辑"' : ''}><defs><linearGradient id="chat-gradient" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="${layout.height}"><stop stop-color="#6442cf"/><stop offset="1" stop-color="#2f8de5"/></linearGradient></defs><rect y="${top}" width="720" height="${height}" fill="${layout.dark ? '#201d29' : 'white'}"/>${groups}</svg>`;
 }
 // Keep every canvas below 16 million pixels / 8192 pixels per side, splitting
 // at message boundaries where possible. A single huge bubble may span pages.

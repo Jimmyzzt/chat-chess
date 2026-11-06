@@ -13,6 +13,7 @@
 <body>
   <header class="site-header">
     <a class="brand" href="./"><span class="brand-icon" aria-hidden="true">!!</span>chat chess<span class="tag">MEME MAKER</span></a>
+    <label class="theme-picker" for="theme">外观 <select id="theme" aria-label="外观"><option value="system">跟随系统</option><option value="light">浅色</option><option value="dark">深色</option></select></label>
   </header>
   <main>
     <section class="intro">
@@ -30,10 +31,8 @@
       </div>
       <div class="display-options">
         <label class="role-picker" for="right-role">右侧角色 <select id="right-role" aria-label="右侧角色"></select></label>
-        <div class="display-toggles"><label><input id="show-ids" type="checkbox">显示 ID</label><label><input id="show-avatars" type="checkbox">显示头像</label></div>
-      </div>
-      <div class="appearance-options">
         <label class="font-control" for="font-size">聊天字号 <input id="font-size" type="range" min="24" max="48" value="38"><output id="font-size-value" for="font-size">38</output></label>
+        <div class="display-toggles"><label><input id="show-ids" type="checkbox">显示 ID</label><label><input id="show-avatars" type="checkbox">显示头像</label></div>
       </div>
       <div class="paper"><div id="chat-preview" aria-label="点击消息编辑文字与棋步评价"></div></div>
       <div class="under-preview"><span>点击气泡或标记，即可编辑</span><button id="add" class="text-button">＋ 添加消息</button></div>

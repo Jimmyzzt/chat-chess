@@ -16,7 +16,7 @@ const sourceLabel = message => ({ example: '示例预设 · 来自参考梗图',
 const currentLayout = () => {
   const fontSize = Number($('font-size').value);
   context.font = `${fontSize}px ${FONT}`;
-  return layoutMessages(messages, measure, { showIds: $('show-ids').checked, showAvatars: $('show-avatars').checked, fontSize });
+  return layoutMessages(messages, measure, { showIds: $('show-ids').checked, showAvatars: $('show-avatars').checked, fontSize, dark: document.documentElement.dataset.theme === 'dark' });
 };
 function renderLegend() { $('legend').innerHTML = Object.entries(RATINGS).map(([value, rating]) => `<span class="legend-item" title="${rating.zh}">${badgeSVG(value)}${rating.label}</span>`).join(''); }
 function updateRoles() {
@@ -175,3 +175,18 @@ $('export').addEventListener('click', async () => {
 });
 window.addEventListener('pagehide', () => { activeController?.abort(); $('api-key').value = ''; $('consent').checked = false; clearDownloads(); });
 render();
+
+const systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+let themePreference = 'system';
+try { const saved = localStorage.getItem('chat-chess-theme'); if (['light', 'dark'].includes(saved)) themePreference = saved; } catch {}
+function applyTheme() {
+ document.documentElement.dataset.theme = themePreference === 'system' ? (systemTheme.matches ? 'dark' : 'light') : themePreference;
+ $('theme').value = themePreference; render();
+}
+$('theme').addEventListener('change', () => {
+ themePreference = $('theme').value;
+ try { if (themePreference === 'system') localStorage.removeItem('chat-chess-theme'); else localStorage.setItem('chat-chess-theme', themePreference); } catch {}
+ applyTheme();
+});
+systemTheme.addEventListener('change', () => { if (themePreference === 'system') applyTheme(); });
+applyTheme();

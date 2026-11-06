@@ -55,3 +55,10 @@ test('full speaker names survive short bubbles and wrap without ellipsis', () =>
     }
   }
 });
+
+test('dark theme exports a dark canvas and readable left bubbles', () => {
+  const svg = renderSVG(layoutMessages(chat, text => text.length * 20, { dark: true, showIds: true }));
+  assert.ok(svg.includes('fill="#201d29"'));
+  assert.ok(svg.includes('fill="#34313f"'));
+  assert.ok(svg.includes('fill="#f3f0f8"'));
+});
