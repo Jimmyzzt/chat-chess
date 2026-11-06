@@ -33,9 +33,11 @@ jobs:
       - name: Check static capacity
         run: npm run capacity
       - uses: actions/configure-pages@v5
+      - name: Version static assets
+        run: node scripts/build-pages.js
       - uses: actions/upload-pages-artifact@v4
         with:
-          path: public
+          path: .pages-dist
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
