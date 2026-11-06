@@ -46,4 +46,5 @@ Key、聊天不持久保存，刷新后清空；只有外观偏好写入 localSt
 
 托管故障或限流可能影响新访问；已加载页面仍能编辑和导出，AI 故障仅影响复盘。备用方式为本地运行或复制 public/ 到其他静态托管。回滚恢复上一版本代码并推送即可。
 
-详细记录见 [VALIDATION.md](VALIDATION.md)。代码与原创 SVG 使用 [MIT License](LICENSE)，第三方素材边界见 [说明](THIRD_PARTY_NOTICES.md)。`nPages 发布会自动为 CSS、JS 和图标生成版本文件名，避免浏览器缓存造成新版页面与旧样式混用。本地开发仍无需构建。
+详细记录见 [VALIDATION.md](VALIDATION.md)。代码与原创 SVG 使用 [MIT License](LICENSE)，第三方素材边界见 [说明](THIRD_PARTY_NOTICES.md)。
+Pages 发布会自动为 CSS、JS 和图标生成版本文件名，避免浏览器缓存造成新版页面与旧样式混用。本地开发仍无需构建。
