@@ -4,7 +4,7 @@
 
 - `npm test`：19/19 通过；全部 API 调用使用模拟响应，不需要真实 Key。新增微信昵称/时间/多行解析、群聊身份、角色切换、头像生成、ID/头像开关及 AI 结果身份保留测试。
 - `npm run deploy:check`：初始 assets-only 配置通过；GitHub Pages workflow 只上传 `public/`，不安装运行时依赖。
-- `npm run capacity`：9 个文件，共 46,406 bytes；最大文件 13,100 bytes。`_headers` 和 `.nojekyll` 是部署配置，首次页面加载只请求 HTML、CSS、3 个 JS、favicon，共 7 个静态资源。
+- `npm run capacity`：9 个文件，共 46,406 bytes；最大文件 13,100 bytes。`_headers` 和 `.nojekyll` 是部署配置，首次页面加载只请求 HTML、CSS、3 个 JS、favicon，共 6 个静态资源。
 - 本地 GET `/` 返回 200；未知 `/api/analyze` 返回 404；CSP、Referrer-Policy、X-Content-Type-Options、X-Frame-Options 等响应头生效。
 - 无认证 OPTIONS `https://api.openai.com/v1/decisions`：200，允许 POST/OPTIONS、authorization/content-type、origin `*`。没有测试真实账户权限、有效 Key 成功响应或实际计费。
 - 浏览器实测六条示例、手动改评价及来源显示、中文冒号和续行粘贴、新增/删除、还原示例、无 Key 时展开设置。
