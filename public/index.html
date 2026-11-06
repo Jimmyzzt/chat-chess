@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' blob: data:; connect-src https://api.openai.com; font-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+  <meta name="description" content="像复盘棋局一样复盘聊天。手动标记、AI 评价，一键做成聊天梗图。">
+  <title>Chat Chess · 这句，妙啊。</title>
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./style.css">
+  <script type="module" src="./app.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="./"><span class="brand-icon" aria-hidden="true">!!</span>chat chess<span class="tag">MEME MAKER</span></a>
+    <span class="local-label"><span class="dot"></span>在你的浏览器里创作</span>
+  </header>
+  <main>
+    <section class="intro">
+      <p class="eyebrow">EVERY REPLY IS A MOVE.</p>
+      <h1>这句，<span>妙啊。</span></h1>
+      <p class="subtitle">把聊天变成一场棋局。给神回复一个应得的 <b>!!</b></p>
+    </section>
+    <section class="workspace" aria-label="聊天梗图制作器">
+      <div class="toolbar">
+        <div class="preview-label"><span class="dot"></span>聊天预览 <span id="message-count">6 条消息</span></div>
+        <div class="toolbar-actions">
+          <button id="paste-open" class="text-button">粘贴对话</button>
+          <button id="reset" class="text-button">还原示例</button>
+        </div>
+      </div>
+      <div class="display-options">
+        <label class="role-picker" for="right-role">右侧角色 <select id="right-role" aria-label="右侧角色"></select></label>
+        <div class="display-toggles"><label><input id="show-ids" type="checkbox">显示 ID</label><label><input id="show-avatars" type="checkbox">显示头像</label></div>
+      </div>
+      <div class="paper"><div id="chat-preview" aria-label="点击消息编辑文字与棋步评价"></div></div>
+      <div class="under-preview"><span>点击气泡或标记，即可编辑</span><button id="add" class="text-button">＋ 添加消息</button></div>
+      <div class="action-bar">
+        <button id="analyze" class="button secondary"><span aria-hidden="true">✧</span> AI 复盘</button>
+        <button id="export" class="button primary"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2v10m-4-4 4 4 4-4M3 13v4h14v-4"/></svg>导出 PNG<span class="button-tag">高清 2×</span></button>
+      </div>
+      <p id="status" class="status" role="status" aria-live="polite">已载入原图示例 · 无需 API Key，自由编辑与导出</p>
+      <div id="download-results" class="downloads" hidden></div>
+      <details id="ai-settings" class="ai-settings">
+        <summary>AI 设置 <span>自带 OpenAI Key · 可选</span></summary>
+        <div class="settings-content">
+          <label for="api-key">OpenAI API Key</label>
+          <div class="key-field"><input id="api-key" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="sk-…"><button id="toggle-key" class="text-button" aria-pressed="false">显示</button><button id="clear-key" class="text-button">清除</button></div>
+          <p class="help">Key 只留在当前页面内存中，刷新后清空。复盘时，浏览器将 Key 和整段聊天直接发送至 OpenAI，本站无转发服务。浏览器扩展、被篡改的页面仍可能读取 Key；请只在可信页面使用专用 Key，并在 OpenAI 账户配置权限和预算提醒。</p>
+          <label class="consent"><input id="consent" type="checkbox">我了解浏览器使用 Key 的风险，同意将聊天发送给 OpenAI。</label>
+          <p class="help">一次点击 = 一次完整对话请求，不自动重试。AI 评价仅供玩梗，可能误解语境；可随时手动修改。</p>
+          <button id="cancel-analysis" class="text-button" hidden>取消复盘</button>
+        </div>
+      </details>
+    </section>
+    <section class="legend-section" aria-label="棋步标记说明"><p class="legend-title">从平平无奇，到一招绝杀</p><div id="legend" class="legend"></div></section>
+    <footer>没有账号，没有云端聊天记录。<span>只有你，和你的神回复。</span></footer>
+    <p class="project-note">独立开源梗图工具，与 Chess.com、微信及 OpenAI 无隶属关系。</p>
+  </main>
+  <dialog id="edit-dialog" aria-labelledby="edit-title">
+    <form id="edit-form">
+      <div class="dialog-heading"><h2 id="edit-title">编辑第 1 条消息</h2><button type="button" class="close" data-close="edit-dialog" aria-label="关闭">×</button></div>
+      <label for="message-text">消息内容</label><textarea id="message-text" rows="4" maxlength="20000" required></textarea>
+      <label for="message-speaker">发言者 ID</label><input id="message-speaker" class="speaker-input" list="speaker-list" maxlength="80" required><datalist id="speaker-list"></datalist>
+      <fieldset><legend>消息位置</legend><label class="radio"><input type="radio" name="side" value="left">左侧</label><label class="radio"><input type="radio" name="side" value="right">右侧</label></fieldset>
+      <p class="help">同一个角色的消息会放在同一侧。调整位置会一并移动该角色的其他消息。</p>
+      <label for="rating">棋步评价</label><select id="rating"></select>
+      <p id="rating-source" class="help"></p>
+      <label class="consent"><input id="manual-rating" type="checkbox">将当前评价标为手动（即使选项未改变）</label>
+      <p class="help">手动标记会在 AI 重跑时保留。选择“未标记”并保存，可让 AI 重新评价这条消息。</p>
+      <div class="dialog-actions"><button id="delete-message" type="button" class="text-button danger">删除消息</button><button type="submit" class="button primary">保存修改</button></div>
+      <p id="edit-error" class="error" role="alert"></p>
+    </form>
+  </dialog>
+  <dialog id="paste-dialog" aria-labelledby="paste-title">
+    <form id="paste-form"><div class="dialog-heading"><h2 id="paste-title">粘贴一段对话</h2><button type="button" class="close" data-close="paste-dialog" aria-label="关闭">×</button></div>
+      <p class="help">自动识别微信复制的“昵称 → 日期时间 → 内容”，支持多人群聊；也支持 A: / B: 或“昵称: 内容”。消息中的换行会保留。</p>
+      <label for="paste-text">对话内容</label><textarea id="paste-text" rows="8" placeholder="A: 在吗？&#10;B: 在，怎么了？" maxlength="24000" required></textarea>
+      <label for="paste-right-role">哪位角色放在右侧？</label><select id="paste-right-role" disabled><option>先粘贴对话，自动识别角色</option></select><p id="paste-summary" class="help"></p>
+      <p class="help">导入会替换当前对话。最多 30 条消息，共 20,000 字符；评价从未标记开始。</p>
+      <div class="dialog-actions"><span></span><button class="button primary" type="submit">导入对话</button></div><p id="paste-error" class="error" role="alert"></p>
+    </form>
+  </dialog>
+  <noscript>请启用 JavaScript 以编辑和导出聊天梗图。</noscript>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{
+  "name": "chat-chess",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --port 8787",
+    "test": "node --test",
+    "deploy": "wrangler deploy",
+    "deploy:check": "wrangler deploy --dry-run",
+    "capacity": "node scripts/capacity.js"
+  },
+  "engines": { "node": ">=22" },
+  "devDependencies": { "wrangler": "^4.0.0" }
+}
