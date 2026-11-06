@@ -1,7 +1,6 @@
 import { RATINGS, MAX_MESSAGES, exampleMessages, validateMessages, parseConversation, clearAIResults, applyAnalysis, speakerOf, participants, assignSides } from './core.js';
 import { FONT, badgeSVG, layoutMessages, renderSVG, exportPages } from './render.js';
 import { PROVIDERS, analyzeWithProvider } from './providers.js';
-import { loadCommunityPack, resetCommunityIcons } from './icons.js';
 const $ = id => document.getElementById(id);
 let messages = exampleMessages();
 let rightSpeaker = 'B';
@@ -63,18 +62,6 @@ $('add').addEventListener('click', () => editMessage(messages.length, true));
 $('right-role').addEventListener('change', () => { rightSpeaker = $('right-role').value; messages = assignSides(messages, rightSpeaker); render(); status('已调整右侧角色 · 发言者身份与已有评价保持不变'); });
 for (const id of ['show-ids', 'show-avatars']) $(id).addEventListener('change', () => { render(); status('显示设置已更新 · 导出图片使用相同设置'); });
 $('font-size').addEventListener('input', () => { $('font-size-value').value = $('font-size').value; render(); });
-$('import-icons').addEventListener('click', () => $('icon-file').click());
-$('icon-file').addEventListener('change', async () => {
-  const file = $('icon-file').files[0]; if (!file) return;
-  $('import-icons').disabled = true;
-  try {
-    await loadCommunityPack(file); renderLegend(); render(); $('reset-icons').hidden = false;
-    $('icon-status').textContent = '已导入社区图标 · 仅当前页面使用 · 权利归原权利人，不属于本项目 MIT';
-    status('社区图标已应用到预览和导出 · 未上传任何文件');
-  } catch (error) { status(`图标导入失败：${error.message}`, true); }
-  finally { $('import-icons').disabled = false; $('icon-file').value = ''; }
-});
-$('reset-icons').addEventListener('click', () => { resetCommunityIcons(); renderLegend(); render(); $('reset-icons').hidden = true; $('icon-status').textContent = '默认原创 SVG · 社区素材可本地导入，不上传、不随 MIT 授权'; status('已恢复原创 SVG 图标'); });
 $('rating').addEventListener('change', () => { $('manual-rating').checked = true; $('rating-source').textContent = '保存后将标为手动修改。'; });
 document.querySelectorAll('[data-close]').forEach(button => button.addEventListener('click', () => $(button.dataset.close).close()));
 $('edit-form').addEventListener('submit', event => {

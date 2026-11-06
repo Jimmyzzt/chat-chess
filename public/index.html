@@ -13,7 +13,6 @@
 <body>
   <header class="site-header">
     <a class="brand" href="./"><span class="brand-icon" aria-hidden="true">!!</span>chat chess<span class="tag">MEME MAKER</span></a>
-    <span class="local-label"><span class="dot"></span>在你的浏览器里创作</span>
   </header>
   <main>
     <section class="intro">
@@ -35,9 +34,7 @@
       </div>
       <div class="appearance-options">
         <label class="font-control" for="font-size">聊天字号 <input id="font-size" type="range" min="24" max="48" value="38"><output id="font-size-value" for="font-size">38</output></label>
-        <div class="icon-controls"><button id="import-icons" class="text-button">导入社区图标 ZIP</button><button id="reset-icons" class="text-button" hidden>恢复原创</button><input id="icon-file" type="file" accept=".zip,application/zip" hidden></div>
       </div>
-      <p id="icon-status" class="icon-status">默认原创 SVG · 社区素材可本地导入，不上传、不随 MIT 授权</p>
       <div class="paper"><div id="chat-preview" aria-label="点击消息编辑文字与棋步评价"></div></div>
       <div class="under-preview"><span>点击气泡或标记，即可编辑</span><button id="add" class="text-button">＋ 添加消息</button></div>
       <div class="action-bar">
@@ -52,7 +49,7 @@
           <label for="provider">AI 服务</label><select id="provider"><option value="deepseek">DeepSeek · deepseek-flash · JSON 输出</option><option value="openai">OpenAI · gpt-6-luna · Decisions</option></select>
           <label id="key-label" for="api-key">DeepSeek API Key</label>
           <div class="key-field"><input id="api-key" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="sk-…"><button id="toggle-key" class="text-button" aria-pressed="false">显示</button><button id="clear-key" class="text-button">清除</button></div>
-          <p class="help">Key 只留在当前页面内存中，刷新后清空。复盘时，浏览器将 Key 和整段聊天直接发送至所选 AI 服务，本站无转发服务。切换服务会清除 Key 和发送确认。浏览器扩展、被篡改的页面仍可能读取 Key；请只在可信页面使用专用 Key，并配置账户权限与消费提醒。</p>
+          <p class="help">Key 只留在当前页面内存中，刷新后清空。复盘时，浏览器将 Key 和整段聊天直接发送至所选 AI 服务，本页面无任何转发服务。切换服务会清除 Key 和发送确认。浏览器扩展、被篡改的页面仍可能读取 Key；请只在可信页面使用专用 Key，并配置账户权限与消费提醒。</p>
           <label class="consent"><input id="consent" type="checkbox"><span id="consent-text">我了解浏览器使用 Key 的风险，同意将聊天发送给 DeepSeek。</span></label>
           <p class="help">一次点击 = 一次完整对话请求，不自动重试。AI 评价仅供玩梗，可能误解语境；可随时手动修改。</p>
           <button id="cancel-analysis" class="text-button" hidden>取消复盘</button>
@@ -65,7 +62,7 @@
   </main>
   <dialog id="edit-dialog" aria-labelledby="edit-title">
     <form id="edit-form">
-      <div class="dialog-heading"><h2 id="edit-title">编辑第 1 条消息</h2><button type="button" class="close" data-close="edit-dialog" aria-label="关闭">×</button></div>
+      <div class="dialog-heading"><h2 id="edit-title">编辑第 1 条消息</h2><button type="button" class="close" data-close="edit-dialog" aria-label="关闭"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 5 10 10M15 5 5 15"/></svg></button></div>
       <label for="message-text">消息内容</label><textarea id="message-text" rows="4" maxlength="20000" required></textarea>
       <label for="message-speaker">发言者 ID</label><input id="message-speaker" class="speaker-input" list="speaker-list" maxlength="80" required><datalist id="speaker-list"></datalist>
       <fieldset><legend>消息位置</legend><label class="radio"><input type="radio" name="side" value="left">左侧</label><label class="radio"><input type="radio" name="side" value="right">右侧</label></fieldset>
@@ -79,7 +76,7 @@
     </form>
   </dialog>
   <dialog id="paste-dialog" aria-labelledby="paste-title">
-    <form id="paste-form"><div class="dialog-heading"><h2 id="paste-title">粘贴一段对话</h2><button type="button" class="close" data-close="paste-dialog" aria-label="关闭">×</button></div>
+    <form id="paste-form"><div class="dialog-heading"><h2 id="paste-title">粘贴一段对话</h2><button type="button" class="close" data-close="paste-dialog" aria-label="关闭"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 5 10 10M15 5 5 15"/></svg></button></div>
       <p class="help">自动识别微信复制的“昵称 → 日期时间 → 内容”，支持多人群聊；也支持 A: / B: 或“昵称: 内容”。消息中的换行会保留。</p>
       <label for="paste-text">对话内容</label><textarea id="paste-text" rows="8" placeholder="A: 在吗？&#10;B: 在，怎么了？" maxlength="24000" required></textarea>
       <label for="paste-right-role">哪位角色放在右侧？</label><select id="paste-right-role" disabled><option>先粘贴对话，自动识别角色</option></select><p id="paste-summary" class="help"></p>

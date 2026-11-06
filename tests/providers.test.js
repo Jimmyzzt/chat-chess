@@ -2,7 +2,6 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { buildDeepSeekRequest, mapDeepSeekAnswers, analyzeWithProvider, PROVIDERS } from '../public/providers.js';
 import { layoutMessages, renderSVG } from '../public/render.js';
-import { loadCommunityPack } from '../public/icons.js';
 const chat = [{ side: 'left', speaker: '林', text: '你好' }, { side: 'right', speaker: 'River', text: 'hello' }];
 const moves = [{ name: 'move_1', rating: 'best' }, { name: 'move_0', rating: 'book' }];
 const response = (content = JSON.stringify({ moves }), finish_reason = 'stop') => ({ choices: [{ finish_reason, message: { content } }] });
@@ -46,7 +45,13 @@ test('font size changes wrapping, bubble height and SVG text consistently', () =
   assert.match(renderSVG(large), new RegExp(`y="${large.items[0].y - 8}"`));
   assert.equal(layoutMessages(chat, text => text.length, { fontSize: NaN }).fontSize, 38);
 });
-test('local icon importer rejects oversized or malformed archives before changing icons', async () => {
-  await assert.rejects(loadCommunityPack(new Blob(['not a zip'])), /ZIP/);
-  await assert.rejects(loadCommunityPack({ size: 9 * 1024 * 1024 }), /8MB/);
+
+test('full speaker names survive short bubbles and wrap without ellipsis', () => {
+  for (const side of ['left', 'right']) {
+    for (const speaker of ['Aleph_0', '地平线下', '很长的完整名字'.repeat(10)]) {
+      const layout = layoutMessages([{side, speaker, text:'善'}], text=>text.length*38, {showIds:true});
+      assert.equal(layout.items[0].nameLines.join(''),speaker);
+      assert.ok(!renderSVG(layout).includes('…'));
+    }
+  }
 });
