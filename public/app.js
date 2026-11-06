@@ -181,10 +181,10 @@ let themePreference = 'system';
 try { const saved = localStorage.getItem('chat-chess-theme'); if (['light', 'dark'].includes(saved)) themePreference = saved; } catch {}
 function applyTheme() {
  document.documentElement.dataset.theme = themePreference === 'system' ? (systemTheme.matches ? 'dark' : 'light') : themePreference;
- $('theme').value = themePreference; render();
+ document.querySelectorAll('input[name="theme"]').forEach(input => { input.checked = input.value === themePreference; }); render();
 }
-$('theme').addEventListener('change', () => {
- themePreference = $('theme').value;
+$('theme').addEventListener('change', event => {
+ themePreference = event.target.value;
  try { if (themePreference === 'system') localStorage.removeItem('chat-chess-theme'); else localStorage.setItem('chat-chess-theme', themePreference); } catch {}
  applyTheme();
 });
